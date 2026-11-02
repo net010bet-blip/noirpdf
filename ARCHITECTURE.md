@@ -43,3 +43,9 @@ Componentes usam tokens CSS centralizados; biblioteca UI compartilhada é reserv
 ## Adaptador GitHub Pages
 
 `NEXT_PUBLIC_PROCESSING_MODE=browser` seleciona export estático com `NEXT_PUBLIC_BASE_PATH` e desabilita rewrites. O frontend usa `browser-tasks.ts` (IndexedDB, estados/TTL, blobs de resultados) e `browser-engine.ts` (pdf-lib/PDF.js/JSZip/docx). Nenhum upload é enviado à rede. `browser-pptx.ts` gera PPTX visual a partir de um modelo original; não contém texto editável. Esse modo tem 20 motores; proteção, desbloqueio e reparo do backend não são habilitados nele. Engines executam no thread principal com pausas entre etapas, não em sandbox de worker. Desempenho de documentos grandes depende do dispositivo.
+
+## Motores avançados e disponibilidade
+
+`advanced.py` integra Office, OCR, Chromium, tabelas, PDF/A, redação rasterizada e provedor IA. `uploads.py` define extensões/MIME e validações estruturais; `services.worker.validate` impõe limites ao parser. `GET /api/tools` expõe ready/reason sem credenciais; `GET /api/health` verifica banco e escrita no armazenamento. Engines ausentes e IA sem URL/modelo são desativados pela interface. Preview de IA é lido do arquivo por endpoint autorizado; conteúdo gerado não é duplicado no banco. PDF/A tem relatório autorizado com hash do artefato.
+
+O supervisor aguarda a API antes de abrir a porta do frontend, e Compose tem healthchecks. Upload e consulta usam timeouts distintos; o polling não sobrepõe consultas. O runner tem limites de CPU/tempo/arquivo. Chromium e Java exigem limites físicos do container em vez do limite virtual de 2 GiB dos outros motores. Isso não transforma o host nativo em sandbox segura.

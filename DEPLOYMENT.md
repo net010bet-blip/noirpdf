@@ -25,4 +25,10 @@ Dockerfiles reconhecem o segredo opcional para pip/npm; nenhum certificado ou se
 
 Testar smoke upload→fila→processamento→download→expiração no domínio final, isolamento de rede e reinício de workers. Validar restauração PostgreSQL, quotas de disco e retenção de backups. Adicionar migrações, supervisão/alertas para jobs presos, idempotência e monitoramento de profundidade da fila. Não há endpoint administrativo nem painel de saúde completo.
 
-A validação desta entrega inclui build da API e configuração Compose; o estado dos testes de stack completa está em TEST_PLAN.md. Não declarar deploy público concluído com base apenas no YAML.
+A configuração Compose, os motores instalados nativamente e o supervisor Next+API têm testes; o build completo das novas imagens e a stack Compose integral ainda não foram validados neste ambiente. Consulte TEST_PLAN.md. Não declarar deploy público concluído com base apenas no YAML.
+
+## Inicialização com os motores novos
+
+Os Dockerfiles agora instalam ferramentas de sistema; o primeiro build é maior e precisa de rede/disco. Prefira `sh scripts/start.sh` (Linux/macOS) ou `iniciar-noirpdf.cmd` (Windows com Docker Desktop). A abertura ocorre depois dos healthchecks. O supervisor Render executa doctor --strict e aguarda a API antes do frontend. Isso não garante recursos suficientes no plano gratuito: Chromium, Office/OCR e IA podem exceder limites de provedores pequenos.
+
+IA local opcional usa infra/compose.ai.yaml e scripts/enable-local-ai.sh. O modelo não é baixado por padrão. Não exponha a porta do modelo publicamente e não habilite um provedor externo pago sem configurar conscientemente as credenciais.

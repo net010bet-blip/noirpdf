@@ -7,7 +7,10 @@
   "scripts": {
     "dev": "npm run dev -w apps/web",
     "build": "npm run build -w apps/web",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:e2e:advanced": "playwright test --config playwright.advanced.config.ts",
+    "test:e2e:pages": "playwright test --config playwright.pages.config.ts",
+    "test:e2e:ai": "playwright test --config playwright.ai.config.ts"
   },
   "devDependencies": {
     "@playwright/test": "^1.58.0",

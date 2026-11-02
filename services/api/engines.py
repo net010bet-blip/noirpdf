@@ -38,6 +38,12 @@ def save(writer, path):
 def run_engine(slug, files, options, out, progress=lambda p:None):
     out=Path(out); out.mkdir(exist_ok=True,parents=True)
     warnings=[]; artifacts=[]
+    core={'juntar-pdf','dividir-pdf','remover-paginas','extrair-paginas','organizar-pdf','digitalizar-pdf','comprimir-pdf','reparar-pdf','jpg-para-pdf','pdf-para-jpg','pdf-para-word','pdf-para-powerpoint','rodar-pdf','numeros-pagina','marca-dagua','recortar-pdf','editar-pdf','formularios-pdf','desbloquear-pdf','proteger-pdf','assinar-pdf','comparar-pdf','pdf-para-markdown'}
+    from .advanced import SLUGS, run_advanced
+    if slug in SLUGS:
+        paths,notes,extra=run_advanced(slug,files,options,out,progress)
+        return finalize(files,options,out,paths,notes,extra)
+    if slug not in core:raise DocumentError('Não há motor implementado para esta ferramenta.')
     if len(files)!=1 and slug not in ('juntar-pdf','comparar-pdf','jpg-para-pdf','digitalizar-pdf'):
         raise DocumentError('Esta ferramenta processa um arquivo por tarefa nesta versão.')
     if slug in ('jpg-para-pdf','digitalizar-pdf'):
@@ -149,6 +155,9 @@ def run_engine(slug, files, options, out, progress=lambda p:None):
             if slug=='assinar-pdf': warnings.append('Assinatura visual digitada, sem certificado, comprovação de identidade ou assinatura criptográfica.')
             if slug=='editar-pdf': warnings.append('Inserção de texto: não altera nem remove texto existente. Coordenadas em pontos a partir do canto inferior esquerdo.')
         if not artifacts: artifacts=[save(w,out/'resultado.pdf')]
+    return finalize(files,options,out,artifacts,warnings,{'compression':slug=='comprimir-pdf'})
+
+def finalize(files,options,out,artifacts,warnings,extra=None):
     for f in artifacts:
         if f.suffix=='.pdf':
             check=reader(f,options.get('output_password','')); assert len(check.pages)>0
@@ -158,6 +167,6 @@ def run_engine(slug, files, options, out, progress=lambda p:None):
         result=out/'resultados.zip'
     else: result=artifacts[0]
     original=sum(Path(f).stat().st_size for f in files)
-    if slug=='comprimir-pdf' and result.stat().st_size>=original:
+    if extra and extra.get('compression') and result.stat().st_size>=original:
         warnings.append('O arquivo não ficou menor com esta otimização. O original pode já estar otimizado.')
-    return {'filename':result.name,'bytes':result.stat().st_size,'original_bytes':original,'warnings':warnings}
+    return {'filename':result.name,'bytes':result.stat().st_size,'original_bytes':original,'warnings':warnings,**(extra or {})}

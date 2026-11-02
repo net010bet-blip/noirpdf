@@ -14,3 +14,7 @@ NoirPDF.zip.sha256
 
 **/out
 github-noirpdf
+
+NoirPDF*.zip
+NoirPDF*.zip.sha256
+sites

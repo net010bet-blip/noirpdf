@@ -1,0 +1,18 @@
+services:
+  ollama:
+    image: ollama/ollama:0.12.6
+    profiles: [ai]
+    environment:
+      OLLAMA_CONTEXT_LENGTH: 8192
+    volumes: [ollama-models:/root/.ollama]
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 5s
+      retries: 24
+      start_period: 10s
+    networks: [default, processing]
+    mem_limit: 6g
+    cpus: 4
+    security_opt: ["no-new-privileges:true"]
+volumes:
+  ollama-models:

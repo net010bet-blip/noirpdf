@@ -3,9 +3,12 @@ import json, sys, resource
 from pathlib import Path
 from services.api.engines import run_engine, DocumentError
 resource.setrlimit(resource.RLIMIT_CPU,(120,120))
-resource.setrlimit(resource.RLIMIT_AS,(2*1024**3,2*1024**3))
+# Chromium and Java reserve large virtual address ranges. Physical memory for
+# these tools must be bounded by the worker container's cgroup.
+if sys.argv[2] not in ('html-para-pdf','pdf-para-pdfa'):
+    resource.setrlimit(resource.RLIMIT_AS,(2*1024**3,2*1024**3))
 resource.setrlimit(resource.RLIMIT_FSIZE,(200*1024**2,200*1024**2))
-resource.setrlimit(resource.RLIMIT_NOFILE,(128,128))
+resource.setrlimit(resource.RLIMIT_NOFILE,(1024,1024))
 base=Path(sys.argv[1]); options=json.load(sys.stdin)
 try:
     # The trusted manifest retains upload order.

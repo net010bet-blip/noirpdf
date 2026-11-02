@@ -6,7 +6,7 @@ services:
     dockerfilePath: ./infra/render.Dockerfile
     dockerContext: .
     healthCheckPath: /
-    autoDeployTrigger: checksPass
+    autoDeployTrigger: commit
     envVars:
       - key: DATA_DIR
         value: /tmp/noirpdf

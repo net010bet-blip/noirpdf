@@ -69,7 +69,7 @@
     "description": "Torne documentos escaneados pesquisáveis.",
     "category": "Otimizar",
     "icon": "ScanText",
-    "available": false
+    "available": true
   },
   {
     "slug": "jpg-para-pdf",
@@ -85,7 +85,7 @@
     "description": "Converta documentos do Word.",
     "category": "Converter",
     "icon": "FileText",
-    "available": false
+    "available": true
   },
   {
     "slug": "powerpoint-para-pdf",
@@ -93,7 +93,7 @@
     "description": "Transforme apresentações em PDF.",
     "category": "Converter",
     "icon": "Presentation",
-    "available": false
+    "available": true
   },
   {
     "slug": "excel-para-pdf",
@@ -101,7 +101,7 @@
     "description": "Converta planilhas em documentos.",
     "category": "Converter",
     "icon": "Table2",
-    "available": false
+    "available": true
   },
   {
     "slug": "html-para-pdf",
@@ -109,7 +109,7 @@
     "description": "Renderize páginas da web em PDF.",
     "category": "Converter",
     "icon": "Code2",
-    "available": false
+    "available": true
   },
   {
     "slug": "pdf-para-jpg",
@@ -141,7 +141,7 @@
     "description": "Extraia tabelas para células editáveis.",
     "category": "Converter",
     "icon": "Sheet",
-    "available": false
+    "available": true
   },
   {
     "slug": "pdf-para-pdfa",
@@ -149,7 +149,7 @@
     "description": "Prepare documentos para arquivamento.",
     "category": "Converter",
     "icon": "Archive",
-    "available": false
+    "available": true
   },
   {
     "slug": "rodar-pdf",
@@ -229,7 +229,7 @@
     "description": "Remova conteúdo sensível permanentemente.",
     "category": "Segurança",
     "icon": "EyeOff",
-    "available": false
+    "available": true
   },
   {
     "slug": "comparar-pdf",
@@ -245,7 +245,7 @@
     "description": "Encontre o essencial do documento.",
     "category": "Inteligência artificial",
     "icon": "Sparkles",
-    "available": false
+    "available": true
   },
   {
     "slug": "traduzir-pdf",
@@ -253,7 +253,7 @@
     "description": "Leve seu conteúdo a outros idiomas.",
     "category": "Inteligência artificial",
     "icon": "Languages",
-    "available": false
+    "available": true
   },
   {
     "slug": "pdf-para-markdown",

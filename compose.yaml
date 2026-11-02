@@ -6,7 +6,13 @@ services:
     environment:
       API_URL: http://api:8000
     ports: ["3000:3000"]
-    depends_on: [api]
+    depends_on:
+      api: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 5s
+      retries: 24
+      start_period: 20s
     security_opt: ["no-new-privileges:true"]
   api:
     build:
@@ -20,10 +26,20 @@ services:
       PUBLIC_ORIGIN: ${PUBLIC_ORIGIN:-http://localhost:3000}
       COOKIE_SECURE: ${COOKIE_SECURE:-false}
       FILE_TTL_SECONDS: ${FILE_TTL_SECONDS:-3600}
+      AI_BASE_URL: ${AI_BASE_URL:-}
+      AI_MODEL: ${AI_MODEL:-}
+      AI_API_KEY: ${AI_API_KEY:-}
+      AI_MAX_INPUT_CHARS: ${AI_MAX_INPUT_CHARS:-60000}
+      AI_MAX_OUTPUT_TOKENS: ${AI_MAX_OUTPUT_TOKENS:-4096}
     volumes: ["documents:/data"]
     depends_on:
       postgres: {condition: service_healthy}
       redis: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health', timeout=3)"]
+      interval: 10s
+      retries: 12
+      start_period: 30s
     networks: [default, processing]
     mem_limit: 1g
     cpus: 1

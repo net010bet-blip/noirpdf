@@ -41,3 +41,17 @@ Código enviado para https://github.com/net010bet-blip/noirpdf. Acrescentado ada
 Foram incluídos .github/workflows/pages.yml, playwright.pages.config.ts, render.yaml, infra/render.Dockerfile, infra/start-render.py e docs/HOSTING.md. O workflow publica somente depois dos testes. A integração permitiu push, mas recusou habilitar Pages (403); a primeira execução passou testes/build e parou em configure-pages com Pages não habilitado. Ativação pelo proprietário ainda necessária no momento desta atualização.
 
 A configuração Next+API com supervisor do Render foi executada localmente e os nove E2E passaram. Não há conta Render conectada nem deploy remoto Render validado. A opção gratuita não completa funcionalidades pendentes nem garante recursos para documentos grandes. As 33 ferramentas completas continuam sendo trabalho em andamento.
+
+## Atualização do ZIP: dez ferramentas que não tinham motor
+
+Acrescentados `services/api/advanced.py`, `uploads.py`, `doctor.py`, validação isolada em `services/worker/validate.py`, opções contextuais em `AdvancedOptions.tsx`, healthchecks, controles de conexão/reconexão e inicialização com espera da API. Catálogo agora possui motores para as 33 rotas: 31 locais e dois dependentes de provedor IA.
+
+Oito motores novos têm testes reais de conversão e E2E com download: OCR por/eng/spa, três Office→PDF, HTML enviado→PDF, tabelas→XLSX, PDF/A-2b validado e redação permanente rasterizada. As duas rotas IA também foram verificadas com um modelo local real Qwen2.5-1.5B, sem API paga, além dos testes de contrato; não há modelo embutido nem ativação automática.
+
+Incluídos scripts de instalação/inicialização, entrada Windows, perfil Ollama opcional e documentação de escopo/conexão. Foram verificados 61 testes Python, E2E de interface/motores, dois testes diretos de modelo real e dois E2E de modelo real. Consulte TEST_PLAN.md para execuções, skips, comandos e limites. O novo conjunto completo de imagens Docker e o iniciador Windows não foram executados aqui; não são contados como testes aprovados. As alterações desta atualização são entregues no ZIP, sem afirmar novo deploy remoto.
+
+As opções não implementadas de ferramentas anteriores (editor completo, captura/QR, workflows, contas, PKI etc.) continuam explícitas na matriz. Novos motores têm escopos reduzidos declarados: HTML sem URL, PDF/A-2b apenas, redação com rasterização, Office moderno sem referências externas, IA em texto sem reconstrução de layout. Não é conclusão da especificação integral nem promessa de ausência total de falhas de infraestrutura.
+
+## Resultado da publicação Sites
+
+A versão browser foi publicada com status succeeded em https://noirpdf-net010bet.net-010-bet.chatgpt.site, com acesso inicial privado à proprietária/ao proprietário. Site ID appgprj_6ae8094c2be08191b11ecb0067485b7e; versão df90bade04c08191a2e449a20764d75f; commit de origem e3905021f0925faab1dd44155a3003c95ed7f944. Vinte ferramentas browser/21 E2E foram aprovados no preview local dessa publicação. A confirmação de deploy veio da API nativa; a autenticação privada impede teste HTTP anônimo do conteúdo. O modo completo com Python não foi hospedado remotamente.

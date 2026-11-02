@@ -31,13 +31,15 @@ def test_full_merge_access_and_delete():
     assert c.delete(f'/api/tasks/{tid}').status_code==204
     assert c.get(f'/api/tasks/{tid}').status_code==404
 
-def test_reject_binary_and_csrf():
+def test_reject_binary_and_csrf(monkeypatch):
+    monkeypatch.delenv('AI_BASE_URL',raising=False)
+    monkeypatch.delenv('AI_MODEL',raising=False)
     c=client();tid=task(c)
     assert c.post(f'/api/tasks/{tid}/upload',files={'files':('evil.pdf',b'not a PDF','application/pdf')}).status_code==422
     assert c.get(f'/api/tasks/{tid}').json()['state']=='created'
     assert c.post('/api/tasks',json={'tool':'juntar-pdf'},headers={'Origin':'https://attacker.example'}).status_code==403
     assert TestClient(app).get('/api/tasks').status_code==401
-    assert c.post('/api/tasks',json={'tool':'html-para-pdf'}).status_code==422
+    assert c.post('/api/tasks',json={'tool':'resumir-pdf'}).status_code==503
 
 def test_cancel_and_download_state():
     c=client();tid=task(c)
@@ -64,3 +66,33 @@ def test_path_names_do_not_escape_and_duplicate_execute():
     assert (DATA/tid/'input'/info['key']).is_file()
     assert c.post(f'/api/tasks/{tid}/execute',json={'options':{}}).status_code==202
     assert c.post(f'/api/tasks/{tid}/execute',json={'options':{}}).status_code==409
+
+def test_queue_failure_is_not_stuck_and_health(monkeypatch):
+    import services.worker.tasks as worker
+    monkeypatch.setenv('EXECUTOR','celery')
+    def unavailable(*_args,**_kwargs):raise RuntimeError('broker offline')
+    monkeypatch.setattr(worker.process,'delay',unavailable)
+    c=client();assert c.get('/api/health').json()['status']=='ok';tid=task(c)
+    assert c.post(f'/api/tasks/{tid}/upload',files={'files':('safe.pdf',pdf_bytes(),'application/pdf')}).status_code==200
+    r=c.post(f'/api/tasks/{tid}/execute',json={'options':{}});assert r.status_code==503
+    assert c.get(f'/api/tasks/{tid}').json()['state']=='failed'
+    other=client()
+    for route in ['text','validation']:assert other.get(f'/api/tasks/{tid}/{route}').status_code==404
+
+def test_office_signature_rejects_renamed_pdf(monkeypatch):
+    import services.api.main as main
+    actual=main.readiness
+    monkeypatch.setattr(main,'readiness',lambda slug:(True,None) if slug=='word-para-pdf' else actual(slug))
+    c=client();tid=task(c,'word-para-pdf')
+    r=c.post(f'/api/tasks/{tid}/upload',files={'files':('renamed.docx',pdf_bytes(),'application/vnd.openxmlformats-officedocument.wordprocessingml.document')})
+    assert r.status_code==422;assert c.get(f'/api/tasks/{tid}').json()['state']=='created'
+
+def test_database_outage_returns_actionable_503_without_details(monkeypatch):
+    import services.api.main as main
+    from sqlalchemy.exc import SQLAlchemyError
+    c=client()
+    class Broken:
+        def __enter__(self):raise SQLAlchemyError('private connection detail')
+        def __exit__(self,*args):pass
+    monkeypatch.setattr(main,'Session',Broken)
+    response=c.get('/api/health');assert response.status_code==503;assert 'Banco de tarefas indisponível' in response.json()['detail'];assert 'private connection detail' not in response.text

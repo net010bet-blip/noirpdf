@@ -1,38 +1,44 @@
 # NoirPDF
 
-Código preparado para [GitHub](https://github.com/net010bet-blip/noirpdf). Publicação estática com motores locais e opção gratuita de servidor: consulte [HOSTING.md](docs/HOSTING.md).
+Utilitários PDF em português, identidade própria preta/violeta e tema claro opcional. Código independente, sem copiar ativos ou código do iLovePDF. Funções disponíveis não têm planos premium ou cobrança pelo aplicativo.
 
-[Configurar servidor gratuito no Render](https://render.com/deploy?repo=https://github.com/net010bet-blip/noirpdf) — requer sua conta e ativação; não significa que todas as 33 ferramentas estejam prontas.
+**ZIP atualizado:** 33 rotas com motores integrados, sendo **31 ferramentas com processamento local no servidor** e **duas de IA dependentes de provedor configurado**. Os escopos reduzidos e opções ainda ausentes estão em [FEATURE_MATRIX.md](FEATURE_MATRIX.md). Isso não é equivalência completa com iLovePDF.
 
-Plataforma independente de utilitários PDF, em português, com tema escuro e opção clara. Todos os recursos entregues são gratuitos. Não é afiliada ao iLovePDF e não utiliza código ou ativos dele.
+## Iniciar
 
-**Entrega incremental, não plataforma completa:** 33 ferramentas têm rotas; 23 têm motores com escopos descritos em [FEATURE_MATRIX.md](FEATURE_MATRIX.md). Não confunda motor disponível com cumprimento de todos os requisitos da ferramenta. OCR, Office, HTML, PDF/A, IA, redação permanente e outras funções avançadas ainda não estão operacionais.
+Use Docker Desktop/Engine com Compose v2 e a porta 3000 livre. Primeira instalação requer rede para baixar dependências.
 
-## Execução local (Linux, Python 3.12+, Node 22+)
+- **Windows:** inicie Docker Desktop e execute `iniciar-noirpdf.cmd`.
+- **Linux/macOS:** execute `sh scripts/start.sh`.
+- **Manual:** copie `.env.example` para `.env`, defina senha própria em `POSTGRES_PASSWORD` e rode `docker compose up --build -d --wait --wait-timeout 180`.
+
+Abra **http://localhost:3000** depois dos healthchecks. Os scripts criam uma senha aleatória sem exibi-la se `.env` não existir. Encerrar: `docker compose down`. Logs: `docker compose logs --tail 100`.
+
+A stack inclui Next.js, FastAPI, PostgreSQL, Redis, Celery worker e scheduler, além dos programas necessários às novas conversões. [Instalação e limitações dos motores](docs/ADVANCED_ENGINES.md).
+
+## Novas ferramentas
+
+OCR real por/eng/spa, Word/PowerPoint/Excel para PDF por LibreOffice, HTML para PDF por Chromium isolado de recursos externos, PDF para Excel com células reais, PDF/A-2b validado pelo veraPDF e ocultação permanente com PDF reconstruído. Resumo e tradução usam um provedor OpenAI-compatible configurável; Ollama local é uma opção gratuita. Sem provedor, essas rotas ficam explicitamente desativadas.
+
+Conversão HTML aceita arquivo, não URL. Ocultação rasteriza e perde texto pesquisável. Tradução produz texto, sem reconstrução de layout. Existem outras limitações relevantes por ferramenta: leia a matriz.
+
+## Desenvolvimento nativo (Linux, Python 3.12+, Node 22+)
 
 ```bash
 python -m venv .venv
 .venv/bin/pip install -r services/api/requirements.txt
 npm ci
-# Terminal 1, na raiz do projeto:
+# Terminal 1, na raiz:
 .venv/bin/uvicorn services.api.main:app --host 127.0.0.1 --port 8000 --no-access-log
 # Terminal 2, na raiz:
 npm run dev
 ```
 
-Abra **http://localhost:3000**. O modo local usa SQLite, armazenamento privado em `data/` e dois slots de subprocessos limitados; não requer serviços pagos. A API varre arquivos expirados a cada minuto enquanto estiver em execução. Ao desligar, a próxima inicialização retoma a exclusão. Não use este modo de desenvolvimento para uploads públicos não confiáveis.
+Motores avançados exigem programas de sistema e configuração; `python -m services.api.doctor` mostra o estado. A instalação dos pacotes Python não instala LibreOffice, idiomas OCR, Chromium ou veraPDF. Para esses recursos, prefira Docker ou consulte ADVANCED_ENGINES.md. SQLite e subprocessos limitados são usados no modo nativo. API: http://127.0.0.1:8000/docs. O browser usa a mesma origem Next em `/api`, sem CORS aberto.
 
-Para produção local do frontend: `npm run build` e `npm run start -w apps/web`. A documentação OpenAPI está em http://127.0.0.1:8000/docs. O browser acessa somente `/api` na origem do frontend; Next faz o proxy à API.
+## IA opcional sem API paga
 
-## Docker Compose
-
-```bash
-cp .env.example .env
-# Edite .env e defina POSTGRES_PASSWORD com um valor aleatório próprio.
-docker compose up --build
-```
-
-Inclui Next.js, API FastAPI, PostgreSQL, Redis, Celery worker e scheduler; somente a porta 3000 é pública. Leia [DEPLOYMENT.md](DEPLOYMENT.md) para HTTPS, redes e validação do deploy. O armazenamento desta entrega é volume privado compartilhado, ainda sem adaptador S3/MinIO.
+Depois de iniciar a stack, `sh scripts/enable-local-ai.sh` configura Ollama local e baixa o modelo opcional (~2 GiB). Não baixa modelos nem usa créditos pagos por padrão. Hardware e recursos de inferência ainda são necessários. Leia os limites e os testes em [ADVANCED_ENGINES.md](docs/ADVANCED_ENGINES.md).
 
 ## Testes
 
@@ -40,35 +46,25 @@ Inclui Next.js, API FastAPI, PostgreSQL, Redis, Celery worker e scheduler; somen
 .venv/bin/python -m pytest -q
 npm run build
 npx playwright install chromium
-# Com API e frontend ativos em localhost:3000:
+# Com API e frontend ativos:
 npm run test:e2e
+# Com motores avançados configurados e servidor em localhost:4200:
+npx playwright test --config playwright.advanced.config.ts
+.venv/bin/python scripts/check-advanced-outputs.py
 ```
 
-Fixtures sintéticas estão em `tests/fixtures`. Screenshots e download E2E vão para `artifacts/`. Resultados e limites da verificação estão em [TEST_PLAN.md](TEST_PLAN.md).
+[TEST_PLAN.md](TEST_PLAN.md) registra resultados, cobertura e limites. Testes de binários podem ser pulados quando o motor não estiver instalado: não conte skips como verificações aprovadas. Fixtures são sintéticas, não resultados usados pela aplicação.
 
-## Uso
+## Hospedagem
 
-Escolha uma ferramenta disponível, selecione arquivos, confira a prévia e as opções, execute e baixe o resultado. Histórico é vinculado a cookie de sessão anônima, não a uma conta autenticada. Favoritos e tema são locais ao navegador. A maioria das ferramentas aceita um único PDF por tarefa; juntar aceita múltiplos e comparar exige dois. Imagens podem ser múltiplas. Intervalos usam `1-3,5`; índices começam em 1.
+A versão navegador foi publicada em https://noirpdf-net010bet.net-010-bet.chatgpt.site, inicialmente privada à conta proprietária. Tem 20 ferramentas locais. A versão completa deste ZIP exige servidor para Office/OCR/PDF-A e provedor configurado para IA.
 
-Uploads: 20 arquivos por tarefa, 50 MB por arquivo, 100 MB por requisição, 500 páginas por PDF. Processamento: 120 segundos de CPU, 180 de tempo total, 2 GiB de endereço virtual e 200 MiB por arquivo de saída. Limites podem causar erro em documentos complexos; eles não garantem equivalência visual em todos os PDFs.
+O [repositório GitHub](https://github.com/net010bet-blip/noirpdf) e este ZIP contêm o código desta atualização. GitHub Pages só executa os 20 adaptadores JavaScript e não substitui a versão com servidor. As demais rotas exibem “Requer servidor”. Consulte [HOSTING.md](docs/HOSTING.md) e [DEPLOYMENT.md](DEPLOYMENT.md). Configuração Render está incluída, mas o plano gratuito pode não ter memória suficiente para todas as conversões e não é apropriado para um modelo de IA grande.
 
-## Estrutura e documentação
+## Segurança e arquitetura
 
-- `apps/web`: Next.js, React, TypeScript, CSS com tokens próprios, Lucide e PDF.js.
-- `services/api`: endpoints, persistência, sessões e engines.
-- `services/worker`: subprocesso limitado, Celery e expiração.
-- `packages/shared`: catálogo tipado pelo consumo JSON.
-- `infra`: imagens Docker; `compose.yaml` na raiz.
-- `tests`: testes de documentos, API e Playwright.
-- [ARCHITECTURE.md](ARCHITECTURE.md), [SECURITY.md](SECURITY.md), [FEATURE_MATRIX.md](FEATURE_MATRIX.md), [DEPLOYMENT.md](DEPLOYMENT.md), [TEST_PLAN.md](TEST_PLAN.md), [docs/LICENSES.md](docs/LICENSES.md).
+Arquivos privados por sessão, UUIDs, validação de formato, limites de upload, subprocessos/timeout, acesso autorizado aos resultados e limpeza por TTL. Histórico usa cookie anônimo, não uma conta com login. Favoritos/tema são locais. Limites padrão: 20 arquivos, 50 MiB/arquivo, 100 MiB/requisição, 500 páginas/PDF, 1 hora de retenção. Python/HTML/Office rodam no servidor; não use o modo de desenvolvimento para exposição pública sem os controles de [SECURITY.md](SECURITY.md).
 
-CSS direto foi usado para manter esta primeira entrega enxuta; Tailwind/shadcn não foram adicionados apenas como dependências sem uso. A fonte é a pilha do sistema. Conversão Office, OCR e IA ficam explicitamente indisponíveis, sem botões falsos nem downloads demonstrativos.
+`apps/web`, `services/api`, `services/worker`, `packages/shared`, `infra`, `tests`, `docs` e `scripts`. Engines substituíveis, catálogo comum e separação frontend/backend. CSS com tokens próprios e Lucide, PDF.js, sem dependências UI sem uso. O ZIP não contém `.env`, senhas, banco, uploads ou dependências instaladas.
 
-## Próximas etapas
-
-1. Completar organização visual de páginas, editor de recorte, opções de divisão e marca d’água; ampliar corpus de regressão e testes de corrupção.
-2. Integrar OCR e LibreOffice em workers separados e medir qualidade; PDF/A somente com validador de conformidade.
-3. Editor/formulários visuais, redação permanente verificável e comparação visual.
-4. Contas reais, OAuth, fluxos encadeados, S3, auditoria, administração e provedor de IA opcional.
-
-Não há cobrança, assinatura paga, limite premium ou promessa de plataforma finalizada nesta entrega.
+Documentação: [ARCHITECTURE.md](ARCHITECTURE.md), [FEATURE_MATRIX.md](FEATURE_MATRIX.md), [SECURITY.md](SECURITY.md), [DEPLOYMENT.md](DEPLOYMENT.md), [TEST_PLAN.md](TEST_PLAN.md), [licenças](docs/LICENSES.md).

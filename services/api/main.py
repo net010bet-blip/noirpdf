@@ -1,4 +1,4 @@
-import os, json, uuid, hashlib, secrets, shutil, time, subprocess, sys, asyncio
+import os, json, uuid, hashlib, secrets, shutil, time, subprocess, sys, asyncio, signal, threading
 from contextlib import asynccontextmanager
 from pathlib import Path
 from datetime import datetime, timezone
@@ -7,10 +7,14 @@ from collections import defaultdict,deque
 from fastapi import FastAPI, Request, Response, HTTPException, UploadFile, File
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
-from sqlalchemy import create_engine, Column, String, Integer, Text, Float
+from sqlalchemy import create_engine, Column, String, Integer, Text, Float, text as sql_text
+from sqlalchemy.exc import SQLAlchemyError
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import declarative_base, sessionmaker
 from PIL import Image
 from .engines import reader, DocumentError
+from .uploads import extension,validate
+from .advanced import readiness
 
 ROOT=Path(__file__).resolve().parents[2]
 DATA=Path(os.getenv('DATA_DIR',ROOT/'data')).resolve(); DATA.mkdir(parents=True,exist_ok=True)
@@ -34,9 +38,15 @@ def expire_files():
 
 @asynccontextmanager
 async def lifespan(app):
+    if os.getenv('EXECUTOR','local')!='celery':
+        with Session() as db:
+            for t in db.query(Task).filter(Task.state.in_(['queued','processing','uploading'])):
+                t.state='failed';t.error='Operação interrompida pela reinicialização do serviço. Envie o arquivo novamente.'
+            db.commit()
     async def sweep():
         while True:
-            await asyncio.to_thread(expire_files)
+            try:await asyncio.to_thread(expire_files)
+            except (SQLAlchemyError,OSError):pass
             await asyncio.sleep(60)
     timer=asyncio.create_task(sweep())
     yield
@@ -62,6 +72,10 @@ def load(db, tid, request):
 
 def public(t):
     return dict(id=t.id,tool=t.tool,state=t.state,progress=t.progress,files=json.loads(t.files),result=json.loads(t.result) if t.result else None,error=t.error,expires=t.expires)
+
+@app.exception_handler(SQLAlchemyError)
+async def database_unavailable(request,error):
+    return JSONResponse(status_code=503,content={'detail':'Banco de tarefas indisponível. Aguarde a recuperação do serviço e tente novamente.'})
 
 @app.middleware('http')
 async def guard(request,call_next):
@@ -92,7 +106,16 @@ def session(request:Request,response:Response):
     return {'mode':'anonymous','retention_seconds':TTL}
 
 @app.get('/api/tools')
-def tools(): return CATALOG
+def tools():
+    return [{**t,'ready':readiness(t['slug'])[0],'reason':readiness(t['slug'])[1]} for t in CATALOG]
+
+@app.get('/api/health')
+def health():
+    with Session() as db:db.execute(sql_text('SELECT 1'))
+    probe=DATA/'.health-check'
+    try:probe.write_bytes(b'ok');probe.unlink(missing_ok=True)
+    except OSError:raise HTTPException(503,'Armazenamento temporário indisponível.')
+    return {'status':'ok','executor':os.getenv('EXECUTOR','local'),'storage':'ready'}
 
 class Create(BaseModel): tool:str
 class Execute(BaseModel): options:dict=Field(default_factory=dict)
@@ -100,11 +123,25 @@ class Execute(BaseModel): options:dict=Field(default_factory=dict)
 def create(body:Create,request:Request):
     tool=next((t for t in CATALOG if t['slug']==body.tool),None)
     if not tool or not tool['available']: raise HTTPException(422,'Motor indisponível nesta versão. Consulte as limitações.')
+    ready,reason=readiness(body.tool)
+    if not ready: raise HTTPException(503,reason)
     with Session() as db:
         active=db.query(Task).filter(Task.owner==owner(request),Task.expires>time.time()).count()
         if active>=30: raise HTTPException(429,'Limite de 30 tarefas ativas. Exclua tarefas anteriores.')
         t=Task(id=str(uuid.uuid4()),owner=owner(request),tool=body.tool,expires=time.time()+TTL); db.add(t); db.commit(); db.refresh(t)
         (DATA/t.id/'input').mkdir(parents=True); return public(t)
+
+validation_slots=threading.BoundedSemaphore(2)
+def validate_isolated(path,tool,mime):
+    with validation_slots:
+        try:
+            check=subprocess.run([sys.executable,'-m','services.worker.validate',str(path),tool,mime or ''],capture_output=True,text=True,timeout=12)
+        except subprocess.TimeoutExpired:raise DocumentError('O arquivo excedeu o tempo de validação. Tente um documento menor ou recuperado.')
+        except OSError:raise DocumentError('Serviço de validação indisponível. Confira a instalação do servidor.')
+        if check.returncode:
+            try:message=json.loads(check.stdout).get('error','Arquivo inválido ou acima do limite de validação.')
+            except (ValueError,TypeError):message='Arquivo inválido ou acima do limite de validação.'
+            raise DocumentError(message)
 
 @app.post('/api/tasks/{tid}/upload')
 async def upload(tid:str,request:Request,files:list[UploadFile]=File(...)):
@@ -116,8 +153,8 @@ async def upload(tid:str,request:Request,files:list[UploadFile]=File(...)):
         added=[]; t.state='uploading'; db.commit()
         try:
             for f in files:
-                image=t.tool in ('jpg-para-pdf','digitalizar-pdf')
-                ext='.img' if image else '.pdf'; key=uuid.uuid4().hex+ext; path=DATA/t.id/'input'/key
+                ext=extension(t.tool,f.filename or '',f.content_type)
+                key=uuid.uuid4().hex+ext; path=DATA/t.id/'input'/key
                 size=0
                 added.append({'key':key,'name':Path((f.filename or 'arquivo').replace('\\','/')).name[:120],'bytes':0})
                 with path.open('wb') as target:
@@ -126,19 +163,7 @@ async def upload(tid:str,request:Request,files:list[UploadFile]=File(...)):
                         if size>MAX_BYTES: raise DocumentError('Limite de 50 MB por arquivo.')
                         target.write(chunk)
                 added[-1]['bytes']=size
-                head=path.open('rb').read(8)
-                if image:
-                    if f.content_type not in ('image/jpeg','image/png','image/webp'): raise DocumentError('Use imagens JPG, PNG ou WebP.')
-                    with Image.open(path) as im:
-                        if im.format not in ('JPEG','PNG','WEBP') or im.width*im.height>40_000_000: raise DocumentError('Formato ou dimensões de imagem não permitidos.')
-                        im.verify()
-                else:
-                    if not head.startswith(b'%PDF-') or f.content_type not in ('application/pdf','application/octet-stream'): raise DocumentError('O conteúdo precisa ser um PDF válido.')
-                    # Encrypted files are validated by the engine with the supplied password.
-                    from pypdf import PdfReader
-                    check=PdfReader(path)
-                    if not check.is_encrypted:
-                        if not 0<len(check.pages)<=500: raise DocumentError('Limite de 500 páginas por PDF.')
+                await asyncio.to_thread(validate_isolated,path,t.tool,f.content_type)
             t.files=json.dumps(existing+added); t.state='ready'; db.commit(); return public(t)
         except Exception as e:
             for item in added: (DATA/t.id/'input'/item['key']).unlink(missing_ok=True)
@@ -178,7 +203,10 @@ def execute(tid:str,body:Execute,request:Request):
         t.state='queued'; t.progress=0; db.commit()
         if os.getenv('EXECUTOR')=='celery':
             from services.worker.tasks import process
-            process.delay(tid,body.options)
+            try: process.delay(tid,body.options)
+            except Exception:
+                t.state='failed'; t.error='Fila indisponível. Tente novamente quando o serviço voltar.'; db.commit()
+                raise HTTPException(503,t.error)
         else: pool.submit(process_task,tid,body.options)
         return public(t)
 
@@ -189,17 +217,17 @@ def process_task(tid,options):
         t.state='processing'; t.progress=5; db.commit()
         try:
             command=[sys.executable,'-m','services.worker.runner',str(DATA/t.id),t.tool]
-            proc=subprocess.Popen(command,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
+            proc=subprocess.Popen(command,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True,start_new_session=True)
             try: stdout,_=proc.communicate(json.dumps(options),timeout=180)
             except subprocess.TimeoutExpired:
-                proc.kill(); proc.communicate(); raise DocumentError('Tempo limite de processamento excedido.')
+                os.killpg(proc.pid,signal.SIGKILL); proc.communicate(); raise DocumentError('Tempo limite de processamento excedido.')
             if proc.returncode!=0:
                 try: message=json.loads(stdout).get('error','Falha no processamento.')
                 except Exception: message='Falha no processamento. Documento inválido ou limite de recursos.'
                 raise DocumentError(message)
             result=json.loads(stdout)
             db.refresh(t)
-            if t.state=='cancelled': shutil.rmtree(DATA/t.id/'output',ignore_errors=True); return
+            if t.state!='processing': shutil.rmtree(DATA/t.id/'output',ignore_errors=True); return
             t.result=json.dumps(result); t.state='completed'; t.progress=100
         except Exception as e:
             db.refresh(t)
@@ -212,6 +240,22 @@ def download(tid:str,request:Request):
         t=load(db,tid,request)
         if t.state!='completed': raise HTTPException(409,'Resultado não disponível.')
         filename=json.loads(t.result)['filename']; return FileResponse(DATA/t.id/'output'/filename,filename=filename)
+
+@app.get('/api/tasks/{tid}/text')
+def preview_text(tid:str,request:Request):
+    with Session() as db:
+        t=load(db,tid,request)
+        if t.state!='completed':raise HTTPException(409,'Resultado não disponível.')
+        name=json.loads(t.result).get('text_preview')
+        if name not in ('resumo.txt','traducao.txt'):raise HTTPException(404)
+        return {'text':(DATA/t.id/'output'/name).read_text(encoding='utf-8')}
+
+@app.get('/api/tasks/{tid}/validation')
+def validation(tid:str,request:Request):
+    with Session() as db:
+        t=load(db,tid,request)
+        if t.state!='completed' or not json.loads(t.result).get('validation_report'):raise HTTPException(404)
+        return FileResponse(DATA/t.id/'output'/'validation.json',filename='validacao-pdfa.json')
 
 @app.post('/api/tasks/{tid}/cancel')
 def cancel(tid:str,request:Request):

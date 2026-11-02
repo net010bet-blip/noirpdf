@@ -1,2 +1,2 @@
 import {defineConfig} from '@playwright/test';
-export default defineConfig({testDir:'./tests/e2e',timeout:60000,use:{baseURL:process.env.E2E_BASE_URL||'http://localhost:3000',headless:true},workers:1,reporter:'list'});
+export default defineConfig({testDir:'./tests/e2e',testMatch:'platform.spec.ts',timeout:60000,use:{baseURL:process.env.E2E_BASE_URL||'http://localhost:3000',headless:true},workers:1,reporter:'list'});
