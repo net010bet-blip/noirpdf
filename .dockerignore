@@ -1,0 +1,16 @@
+.git
+node_modules
+**/node_modules
+**/.next
+.venv
+.env
+data
+artifacts
+**/__pycache__
+test-results
+
+NoirPDF.zip
+NoirPDF.zip.sha256
+
+**/out
+github-noirpdf

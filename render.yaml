@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: noirpdf
+    runtime: docker
+    plan: free
+    dockerfilePath: ./infra/render.Dockerfile
+    dockerContext: .
+    healthCheckPath: /
+    autoDeployTrigger: checksPass
+    envVars:
+      - key: DATA_DIR
+        value: /tmp/noirpdf
+      - key: EXECUTOR
+        value: local
+      - key: MAX_CONCURRENT_TASKS
+        value: '1'
+      - key: FILE_TTL_SECONDS
+        value: '3600'
+      - key: COOKIE_SECURE
+        value: 'true'
+      - key: NEXT_TELEMETRY_DISABLED
+        value: '1'

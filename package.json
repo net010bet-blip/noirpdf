@@ -1,0 +1,19 @@
+{
+  "name": "noirpdf",
+  "private": true,
+  "workspaces": [
+    "apps/web"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w apps/web",
+    "build": "npm run build -w apps/web",
+    "test:e2e": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.0",
+    "postcss": "8.5.32"
+  },
+  "overrides": {
+    "postcss": "8.5.32"
+  }
+}

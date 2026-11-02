@@ -1,0 +1,80 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: infra/web.Dockerfile
+    environment:
+      API_URL: http://api:8000
+    ports: ["3000:3000"]
+    depends_on: [api]
+    security_opt: ["no-new-privileges:true"]
+  api:
+    build:
+      context: .
+      dockerfile: infra/api.Dockerfile
+    environment: &api-env
+      DATABASE_URL: postgresql+psycopg://noir:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/noirpdf
+      DATA_DIR: /data
+      REDIS_URL: redis://redis:6379/0
+      EXECUTOR: celery
+      PUBLIC_ORIGIN: ${PUBLIC_ORIGIN:-http://localhost:3000}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      FILE_TTL_SECONDS: ${FILE_TTL_SECONDS:-3600}
+    volumes: ["documents:/data"]
+    depends_on:
+      postgres: {condition: service_healthy}
+      redis: {condition: service_healthy}
+    networks: [default, processing]
+    mem_limit: 1g
+    cpus: 1
+    security_opt: ["no-new-privileges:true"]
+  worker:
+    build:
+      context: .
+      dockerfile: infra/api.Dockerfile
+    command: celery -A services.worker.tasks worker --concurrency=2 --loglevel=WARNING
+    environment: *api-env
+    volumes: ["documents:/data"]
+    depends_on: [api]
+    networks: [processing]
+    mem_limit: 3g
+    cpus: 2
+    pids_limit: 128
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: [ALL]
+  scheduler:
+    build:
+      context: .
+      dockerfile: infra/api.Dockerfile
+    command: celery -A services.worker.tasks beat --schedule=/tmp/celerybeat-schedule --loglevel=WARNING
+    environment: *api-env
+    volumes: ["documents:/data"]
+    depends_on: [api]
+    networks: [processing]
+    security_opt: ["no-new-privileges:true"]
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: noir
+      POSTGRES_DB: noirpdf
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    volumes: ["database:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U noir -d noirpdf"]
+      interval: 5s
+      retries: 10
+    networks: [processing]
+  redis:
+    image: redis:7.0-alpine
+    command: redis-server --save "" --appendonly no
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 10
+    networks: [processing]
+volumes:
+  documents:
+  database:
+networks:
+  processing:
+    internal: true

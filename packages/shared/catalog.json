@@ -1,0 +1,266 @@
+[
+  {
+    "slug": "juntar-pdf",
+    "name": "Juntar PDF",
+    "description": "Reúna documentos em um único PDF.",
+    "category": "Organizar",
+    "icon": "Files",
+    "available": true
+  },
+  {
+    "slug": "dividir-pdf",
+    "name": "Dividir PDF",
+    "description": "Separe por intervalos ou por página.",
+    "category": "Organizar",
+    "icon": "Scissors",
+    "available": true
+  },
+  {
+    "slug": "remover-paginas",
+    "name": "Remover páginas",
+    "description": "Deixe apenas as páginas que importam.",
+    "category": "Organizar",
+    "icon": "FileMinus",
+    "available": true
+  },
+  {
+    "slug": "extrair-paginas",
+    "name": "Extrair páginas",
+    "description": "Crie um documento com sua seleção.",
+    "category": "Organizar",
+    "icon": "FileOutput",
+    "available": true
+  },
+  {
+    "slug": "organizar-pdf",
+    "name": "Organizar PDF",
+    "description": "Reordene, exclua e gire suas páginas.",
+    "category": "Organizar",
+    "icon": "LayoutGrid",
+    "available": true
+  },
+  {
+    "slug": "digitalizar-pdf",
+    "name": "Digitalizar para PDF",
+    "description": "Transforme imagens em documentos.",
+    "category": "Organizar",
+    "icon": "ScanLine",
+    "available": true
+  },
+  {
+    "slug": "comprimir-pdf",
+    "name": "Comprimir PDF",
+    "description": "Otimize recursos e reduza o tamanho.",
+    "category": "Otimizar",
+    "icon": "Minimize2",
+    "available": true
+  },
+  {
+    "slug": "reparar-pdf",
+    "name": "Reparar PDF",
+    "description": "Tente recuperar a estrutura do documento.",
+    "category": "Otimizar",
+    "icon": "Wrench",
+    "available": true
+  },
+  {
+    "slug": "ocr-pdf",
+    "name": "OCR PDF",
+    "description": "Torne documentos escaneados pesquisáveis.",
+    "category": "Otimizar",
+    "icon": "ScanText",
+    "available": false
+  },
+  {
+    "slug": "jpg-para-pdf",
+    "name": "JPG para PDF",
+    "description": "Suas imagens em um PDF organizado.",
+    "category": "Converter",
+    "icon": "ImagePlus",
+    "available": true
+  },
+  {
+    "slug": "word-para-pdf",
+    "name": "Word para PDF",
+    "description": "Converta documentos do Word.",
+    "category": "Converter",
+    "icon": "FileText",
+    "available": false
+  },
+  {
+    "slug": "powerpoint-para-pdf",
+    "name": "PowerPoint para PDF",
+    "description": "Transforme apresentações em PDF.",
+    "category": "Converter",
+    "icon": "Presentation",
+    "available": false
+  },
+  {
+    "slug": "excel-para-pdf",
+    "name": "Excel para PDF",
+    "description": "Converta planilhas em documentos.",
+    "category": "Converter",
+    "icon": "Table2",
+    "available": false
+  },
+  {
+    "slug": "html-para-pdf",
+    "name": "HTML para PDF",
+    "description": "Renderize páginas da web em PDF.",
+    "category": "Converter",
+    "icon": "Code2",
+    "available": false
+  },
+  {
+    "slug": "pdf-para-jpg",
+    "name": "PDF para JPG",
+    "description": "Exporte páginas como imagens de qualidade.",
+    "category": "Converter",
+    "icon": "Image",
+    "available": true
+  },
+  {
+    "slug": "pdf-para-word",
+    "name": "PDF para Word",
+    "description": "Extraia texto em um DOCX editável.",
+    "category": "Converter",
+    "icon": "FileType2",
+    "available": true
+  },
+  {
+    "slug": "pdf-para-powerpoint",
+    "name": "PDF para PowerPoint",
+    "description": "Crie slides com fidelidade visual.",
+    "category": "Converter",
+    "icon": "PanelsTopLeft",
+    "available": true
+  },
+  {
+    "slug": "pdf-para-excel",
+    "name": "PDF para Excel",
+    "description": "Extraia tabelas para células editáveis.",
+    "category": "Converter",
+    "icon": "Sheet",
+    "available": false
+  },
+  {
+    "slug": "pdf-para-pdfa",
+    "name": "PDF para PDF/A",
+    "description": "Prepare documentos para arquivamento.",
+    "category": "Converter",
+    "icon": "Archive",
+    "available": false
+  },
+  {
+    "slug": "rodar-pdf",
+    "name": "Rodar PDF",
+    "description": "Coloque cada página na direção certa.",
+    "category": "Editar",
+    "icon": "RotateCw",
+    "available": true
+  },
+  {
+    "slug": "numeros-pagina",
+    "name": "Números de página",
+    "description": "Adicione numeração ao documento.",
+    "category": "Editar",
+    "icon": "ListOrdered",
+    "available": true
+  },
+  {
+    "slug": "marca-dagua",
+    "name": "Marca d’água",
+    "description": "Identifique seus PDFs com texto.",
+    "category": "Editar",
+    "icon": "Stamp",
+    "available": true
+  },
+  {
+    "slug": "recortar-pdf",
+    "name": "Recortar PDF",
+    "description": "Ajuste a área visível das páginas.",
+    "category": "Editar",
+    "icon": "Crop",
+    "available": true
+  },
+  {
+    "slug": "editar-pdf",
+    "name": "Editar PDF",
+    "description": "Adicione texto ao seu documento.",
+    "category": "Editar",
+    "icon": "Pencil",
+    "available": true
+  },
+  {
+    "slug": "formularios-pdf",
+    "name": "Formulários PDF",
+    "description": "Preencha campos de formulários existentes.",
+    "category": "Editar",
+    "icon": "ClipboardList",
+    "available": true
+  },
+  {
+    "slug": "desbloquear-pdf",
+    "name": "Desbloquear PDF",
+    "description": "Remova a senha que você conhece.",
+    "category": "Segurança",
+    "icon": "LockOpen",
+    "available": true
+  },
+  {
+    "slug": "proteger-pdf",
+    "name": "Proteger PDF",
+    "description": "Proteja documentos com senha.",
+    "category": "Segurança",
+    "icon": "LockKeyhole",
+    "available": true
+  },
+  {
+    "slug": "assinar-pdf",
+    "name": "Assinar PDF",
+    "description": "Adicione uma assinatura visual.",
+    "category": "Segurança",
+    "icon": "PenTool",
+    "available": true
+  },
+  {
+    "slug": "ocultar-informacoes",
+    "name": "Ocultar informações",
+    "description": "Remova conteúdo sensível permanentemente.",
+    "category": "Segurança",
+    "icon": "EyeOff",
+    "available": false
+  },
+  {
+    "slug": "comparar-pdf",
+    "name": "Comparar PDF",
+    "description": "Encontre diferenças entre documentos.",
+    "category": "Segurança",
+    "icon": "Columns2",
+    "available": true
+  },
+  {
+    "slug": "resumir-pdf",
+    "name": "Resumir PDF com IA",
+    "description": "Encontre o essencial do documento.",
+    "category": "Inteligência artificial",
+    "icon": "Sparkles",
+    "available": false
+  },
+  {
+    "slug": "traduzir-pdf",
+    "name": "Traduzir PDF com IA",
+    "description": "Leve seu conteúdo a outros idiomas.",
+    "category": "Inteligência artificial",
+    "icon": "Languages",
+    "available": false
+  },
+  {
+    "slug": "pdf-para-markdown",
+    "name": "PDF para Markdown",
+    "description": "Extraia texto em formato Markdown.",
+    "category": "Inteligência artificial",
+    "icon": "FileCode2",
+    "available": true
+  }
+]
