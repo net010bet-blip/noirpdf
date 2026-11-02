@@ -40,7 +40,6 @@ jobs:
           python -m http.server 4173 --bind 127.0.0.1 --directory /tmp/noir-pages > /tmp/pages-server.log 2>&1 &
           PAGES_TEST_URL=http://127.0.0.1:4173/${{ github.event.repository.name }} npx playwright test --config playwright.pages.config.ts
           python scripts/check_browser_outputs.py
-      - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
           path: apps/web/out
@@ -51,6 +50,7 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      - uses: actions/configure-pages@v5
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4

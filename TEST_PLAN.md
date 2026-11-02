@@ -34,3 +34,7 @@ Em ambientes restritos, permitir sockets de loopback para TestClient/servidores 
 Corpus com fontes não latinas, tabelas complexas, PDFs assinados, tags de acessibilidade, formulários diversos, anexos, arquivos parcialmente corrompidos e imagens grandes. Regressão visual com métricas entre renderizações, OCR com ground truth e Office com referências de layout ainda não existem. Compressão tem teste de validade, sem promessa de ganho mínimo ou benchmark de legibilidade.
 
 Adicionar fuzzing, upload chunked/volumétrico, quotas de disco, carga simultânea, falhas banco/broker, reinício e tarefas presas, expiração durante download, corrida upload/execute/delete, WCAG com leitor de tela e axe. Screenshots verificam layout manualmente e ausência de overflow, não são baseline automatizada de regressão visual. Não há Vitest instalado apenas para testar funções que já têm cobertura de integração; regras frontend extraídas posteriormente deverão ter testes unitários próprios.
+
+## Hospedagem (segunda entrega)
+
+O workflow do GitHub executou com sucesso os 39 testes Python, build estático e 21 E2E do modo local, incluindo os 20 motores, e a validação de seus artefatos. A primeira publicação parou exclusivamente em configure-pages porque Pages não estava habilitado (a integração recebeu 403 ao tentar habilitar). A ativação precisa ser feita pelo proprietário em Settings > Pages. A versão Next+API iniciada por infra/start-render.py também passou nos nove E2E localmente; isso não equivale a um deploy remoto Render, nem a um teste da imagem Docker final.

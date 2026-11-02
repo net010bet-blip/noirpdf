@@ -33,3 +33,11 @@ Não há garantia de preservação de assinaturas digitais, tags, tabelas comple
 ## Próximo conjunto de implementação
 
 Completar opções e editores visuais da fase 2; validar Compose em host com espaço suficiente; isolar validação por job e adicionar recuperação idempotente. Em seguida, OCR/LibreOffice com fixtures reais e métricas; PDF/A somente com validador. Depois edição avançada, redação verificável, contas, workflows e IA opcional.
+
+## Atualização: publicação e opção gratuita
+
+Código enviado para https://github.com/net010bet-blip/noirpdf. Acrescentado adaptador estático com 20 motores locais, IndexedDB, download de blobs, reabertura de histórico e expiração local. 21 E2E do modo estático passaram localmente e no GitHub; scripts/check_browser_outputs.py validou os 20 formatos/resultados reais. Audit npm voltou a zero vulnerabilidades após remover dependência transitiva vulnerável e gerar PPTX visual com template original.
+
+Foram incluídos .github/workflows/pages.yml, playwright.pages.config.ts, render.yaml, infra/render.Dockerfile, infra/start-render.py e docs/HOSTING.md. O workflow publica somente depois dos testes. A integração permitiu push, mas recusou habilitar Pages (403); a primeira execução passou testes/build e parou em configure-pages com Pages não habilitado. Ativação pelo proprietário ainda necessária no momento desta atualização.
+
+A configuração Next+API com supervisor do Render foi executada localmente e os nove E2E passaram. Não há conta Render conectada nem deploy remoto Render validado. A opção gratuita não completa funcionalidades pendentes nem garante recursos para documentos grandes. As 33 ferramentas completas continuam sendo trabalho em andamento.
